@@ -49,6 +49,7 @@ function main_menu() {
         echo -e "                 \033[48;2;9;10;12m CryptoAirdropHindi \e[0m";
         echo -e "\e[0;37m Subscribe Our Telegram Channel: \e[4;35mhttps://t.me/Crypto_airdropHM/";
         echo "================================================================"
+        echo -e ""
         echo "To exit the script, press ctrl + C."
         echo "Please choose an operation:"
         echo "1. Start Node"
