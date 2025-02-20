@@ -56,6 +56,7 @@ echo "2. Show Node ID"
 echo "3. Change Node ID"
 echo "4. Exit Script"
 echo -e "\nEnter your choice (1-4):"
+read choice
 
 
         
