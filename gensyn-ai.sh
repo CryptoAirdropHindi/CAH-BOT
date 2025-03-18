@@ -159,11 +159,10 @@ function view_telemetry_logs() {
     main_menu
 }
 
-# ----------------------------
-# Display ASCII Art Header
-# ----------------------------
-display_ascii() {
-    clear
+# Main menu function
+function main_menu() {
+    while true; do
+        clear
         echo -e "    ${RED}██╗  ██╗ █████╗ ███████╗ █████╗ ███╗   ██╗${NC}"
         echo -e "    ${GREEN}██║  ██║██╔══██╗██╔════╝██╔══██╗████╗  ██║${NC}"
         echo -e "    ${BLUE}███████║███████║███████╗███████║██╔██╗ ██║${NC}"
@@ -175,6 +174,7 @@ display_ascii() {
         echo -e "=== 📱 Telegram: https://t.me/CryptoAirdropHindi6 ==="
         echo -e "=== 🎥 YouTube: https://www.youtube.com/@CryptoAirdropHindi6 ==="
         echo -e "=== 💻 GitHub Repo: https://github.com/CryptoAirdropHindi/ ==="
+        echo "================================================================"
         echo "To exit the script, press Ctrl + C."
         echo "Please choose an action:"
         echo "1. Install gensyn-ai node"
