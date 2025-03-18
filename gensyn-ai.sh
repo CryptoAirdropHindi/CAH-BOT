@@ -1,14 +1,14 @@
 #!/bin/bash
 
-# Script Save Path
+# Script file path
 SCRIPT_PATH="$HOME/gensyn-ai.sh"
 
-# Install gensyn-ai node function
+# Function to install gensyn-ai node
 function install_gensyn_ai_node() {
-    # Update the system
+    # Update system
     sudo apt-get update && sudo apt-get upgrade -y
 
-    # Install required packages
+    # Install necessary packages
     sudo apt install -y curl iptables build-essential git wget lz4 jq make gcc nano automake autoconf tmux htop nvme-cli libgbm1 pkg-config libssl-dev libleveldb-dev tar clang bsdmainutils ncdu unzip libleveldb-dev python3 python3-pip
 
     # Check if Docker is installed
@@ -30,13 +30,13 @@ function install_gensyn_ai_node() {
     git clone https://github.com/gensyn-ai/rl-swarm/
     cd rl-swarm
 
-    # Backup the existing docker-compose.yaml file
+    # Backup existing docker-compose.yaml file
     mv docker-compose.yaml docker-compose.yaml.old
 
-    # Prompt user to choose if they have a GPU
+    # Prompt user if their system has a GPU
     read -p "Does your system have a GPU? (y/n): " has_gpu
 
-    # Create a new docker-compose.yaml file based on user choice
+    # Create new docker-compose.yaml file based on user input
     if [ "$has_gpu" == "y" ]; then
         cat <<EOL > docker-compose.yaml
 version: '3'
@@ -128,43 +128,61 @@ services:
 EOL
     fi
 
-    # Execute docker-compose up --build -d and show logs
+    # Run docker compose up --build -d and display logs
     docker compose up --build -d && docker compose logs -f
 }
 
-# View Rl Swarm logs function
+# Function to view Rl Swarm logs
 function view_rl_swarm_logs() {
     cd /root/rl-swarm && docker-compose logs -f swarm_node
+
+    # Prompt user to press any key to return to the main menu
+    read -n 1 -s -r -p "Press any key to return to the main menu..."
+    main_menu
 }
 
-# View Web UI logs function
+# Function to view Web UI logs
 function view_web_ui_logs() {
     cd /root/rl-swarm && docker-compose logs -f fastapi
+
+    # Prompt user to press any key to return to the main menu
+    read -n 1 -s -r -p "Press any key to return to the main menu..."
+    main_menu
 }
 
-# View Telemetry logs function
+# Function to view Telemetry logs
 function view_telemetry_logs() {
     cd /root/rl-swarm && docker-compose logs -f otel-collector
+
+    # Prompt user to press any key to return to the main menu
+    read -n 1 -s -r -p "Press any key to return to the main menu..."
+    main_menu
 }
 
-# Main menu function
-function main_menu() {
-    while true; do
-        clear
-        echo -e "${CYAN}=== Telegram Channel : CryptoAirdropHindi (@CryptoAirdropHindi) ===${NC}"
+# ----------------------------
+# Display ASCII Art Header
+# ----------------------------
+display_ascii() {
+    clear
+        echo -e "    ${RED}██╗  ██╗ █████╗ ███████╗ █████╗ ███╗   ██╗${NC}"
+        echo -e "    ${GREEN}██║  ██║██╔══██╗██╔════╝██╔══██╗████╗  ██║${NC}"
+        echo -e "    ${BLUE}███████║███████║███████╗███████║██╔██╗ ██║${NC}"
+        echo -e "    ${YELLOW}██╔══██║██╔══██║╚════██║██╔══██║██║╚██╗██║${NC}"
+        echo -e "    ${MAGENTA}██║  ██║██║  ██║███████║██║  ██║██║ ╚████║${NC}"
+        echo -e "    ${CYAN}╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝${NC}"
+        echo -e "${CYAN}=== Telegram Channel : (CryptoAirdropHindi) (@CryptoAirdropHindi) ===${NC}"  
         echo -e "${CYAN}=== Follow us on social media for updates and more ===${NC}"
         echo -e "=== 📱 Telegram: https://t.me/CryptoAirdropHindi6 ==="
         echo -e "=== 🎥 YouTube: https://www.youtube.com/@CryptoAirdropHindi6 ==="
         echo -e "=== 💻 GitHub Repo: https://github.com/CryptoAirdropHindi/ ==="
-        echo "================================================================"
-        echo "Press Ctrl + C to exit the script"
-        echo "Please select an operation:"
+        echo "To exit the script, press Ctrl + C."
+        echo "Please choose an action:"
         echo "1. Install gensyn-ai node"
         echo "2. View Rl Swarm logs"
         echo "3. View Web UI logs"
         echo "4. View Telemetry logs"
         echo "5. Exit"
-        read -p "Enter your choice [1-5]: " choice
+        read -p "Enter option [1-5]: " choice
         case $choice in
             1)
                 install_gensyn_ai_node
