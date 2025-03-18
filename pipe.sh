@@ -172,6 +172,7 @@ display_ascii() {
     echo -e "    ${YELLOW}██╔══██║██╔══██║╚════██║██╔══██║██║╚██╗██║${NC}"
     echo -e "    ${MAGENTA}██║  ██║██║  ██║███████║██║  ██║██║ ╚████║${NC}"
     echo -e "    ${CYAN}╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝${NC}"
+    echo "================================================================"
     echo -e "${CYAN}=== Telegram Channel : (CryptoAirdropHindi) (@CryptoAirdropHindi) ===${NC}"  
     echo -e "${CYAN}=== Follow us on social media for updates and more ===${NC}"
     echo -e "=== 📱 Telegram: https://t.me/CryptoAirdropHindi6 ==="
