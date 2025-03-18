@@ -58,7 +58,7 @@ install_pipe_node() {
     wget -O pop "https://dl.pipecdn.app/v0.2.8/pop"
     chmod +x pop
 
-    sudo ./pop  --ram ${ram}   --max-disk ${max_disk}  --cache-dir ${curr_dir}/download_cache --pubKey ${soladdress} --signup-by-referral-route e70d24f2d1553964
+    sudo ./pop  --ram ${ram}   --max-disk ${max_disk}  --cache-dir ${curr_dir}/download_cache --pubKey ${soladdress} --signup-by-referral-route 63b754eb97201984
 
     # Create systemd service file for Pipe Node
     sudo tee /etc/systemd/system/pipe.service > /dev/null << EOF
