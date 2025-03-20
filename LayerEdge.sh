@@ -96,34 +96,24 @@ EOF
 }
 
 # ----------------------------
-# Run Merkle Service in Screen
+# Start Merkle Service in Screen
 # ----------------------------
 run_merkle() {
     echo -e "${INFO} Starting Merkle Service in a screen session...${RESET}"
 
-    # Check if the Risc0 Merkle Service directory exists
-    if [ ! -d "~/risc0-merkle-service" ]; then
-        echo -e "${ERROR} Risc0 Merkle Service directory not found. Cloning repository...${RESET}"
-        git clone https://github.com/Layer-Edge/risc0-merkle-service.git ~/risc0-merkle-service
-    fi
-
-    # Ensure Cargo is installed
-    if ! command -v cargo &> /dev/null; then
-        echo -e "${ERROR} Cargo not found! Please install Rust and Cargo first.${RESET}"
-        exit 1
-    fi
+    # Navigate to the Merkle service directory
+    cd ~/risc0-merkle-service || exit
 
     # Create a screen session for Merkle Service
     screen -S merkle -d -m bash -c "
-        cd ~/risc0-merkle-service && 
-        echo '${PROGRESS} Building and running Risc0 Merkle Service...${RESET}' && 
-        cargo build && cargo run
+        echo '${PROGRESS} Starting Merkle Service...${RESET}' && 
+        cargo build && 
+        cargo run
     "
     
     echo -e "${CHECKMARK} Merkle Service is running in screen session.${RESET}"
     echo -e "${INFO} To reattach to the Merkle service, run: screen -r merkle${RESET}"
 }
-
 
 # ----------------------------
 # Start LayerEdge Node in Screen
@@ -152,7 +142,6 @@ start_node() {
     echo -e "${CHECKMARK} LayerEdge Node is running in screen session.${RESET}"
     echo -e "${INFO} To reattach to the LayerEdge node, run: screen -r layeredge${RESET}"
 }
-
 
 # ----------------------------
 # Main Menu
@@ -184,8 +173,8 @@ while true; do
     case $choice in
         1) install_layeredge;;
         2) configure_layeredge;;
-        3) start_node;;
-        4) run_merkle;;
+        3) run_merkle;;
+        4) start_node;;
         5)
             echo -e "${EXIT} Exiting...${RESET}"
             exit 0
