@@ -158,8 +158,8 @@ show_menu() {
     echo -e "    ${GREEN}LayerEdge Auto Bot Setup${RESET}"
     echo -e "    ${CYAN}1.${RESET} ${INSTALL} Install LayerEdge Node"
     echo -e "    ${CYAN}2.${RESET} ${INFO} Configure LayerEdge Node"
-    echo -e "    ${CYAN}4.${RESET} ${INFO} Run Merkle Service"
-    echo -e "    ${CYAN}3.${RESET} ${RESTART} Start LayerEdge Node"
+    echo -e "    ${CYAN}3.${RESET} ${INFO} Run Merkle Service"
+    echo -e "    ${CYAN}4.${RESET} ${RESTART} Start LayerEdge Node"
     echo -e "    ${CYAN}5.${RESET} ${EXIT} Exit"
     echo -ne "    ${YELLOW}Enter your choice [1-5]: ${RESET}"
 }
