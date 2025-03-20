@@ -96,10 +96,40 @@ EOF
 }
 
 # ----------------------------
-# Start LayerEdge Node
+# Run Merkle Service in Screen
+# ----------------------------
+run_merkle() {
+    echo -e "${INFO} Starting Merkle Service in a screen session...${RESET}"
+
+    # Check if the Risc0 Merkle Service directory exists
+    if [ ! -d "~/risc0-merkle-service" ]; then
+        echo -e "${ERROR} Risc0 Merkle Service directory not found. Cloning repository...${RESET}"
+        git clone https://github.com/Layer-Edge/risc0-merkle-service.git ~/risc0-merkle-service
+    fi
+
+    # Ensure Cargo is installed
+    if ! command -v cargo &> /dev/null; then
+        echo -e "${ERROR} Cargo not found! Please install Rust and Cargo first.${RESET}"
+        exit 1
+    fi
+
+    # Create a screen session for Merkle Service
+    screen -S merkle -d -m bash -c "
+        cd ~/risc0-merkle-service && 
+        echo '${PROGRESS} Building and running Risc0 Merkle Service...${RESET}' && 
+        cargo build && cargo run
+    "
+    
+    echo -e "${CHECKMARK} Merkle Service is running in screen session.${RESET}"
+    echo -e "${INFO} To reattach to the Merkle service, run: screen -r merkle${RESET}"
+}
+
+
+# ----------------------------
+# Start LayerEdge Node in Screen
 # ----------------------------
 start_node() {
-    echo -e "${INFO} Starting LayerEdge Node...${RESET}"
+    echo -e "${INFO} Starting LayerEdge Node in a screen session...${RESET}"
 
     # Navigate to the correct directory if needed
     cd ~/light-node || exit
@@ -112,25 +142,17 @@ start_node() {
         exit 1
     fi
 
-    # Set execute permission for the light-node binary
-    echo -e "${PROGRESS} Giving execute permissions to light-node...${RESET}"
-    chmod +x light-node
-    if [[ $? -ne 0 ]]; then
-        echo -e "${ERROR} Failed to set execute permissions. Please check your directory permissions.${RESET}"
-        exit 1
-    fi
-
-    # Start the light-node
-    echo -e "${INFO} Starting light-node...${RESET}"
-    ./light-node
-    if [[ $? -ne 0 ]]; then
-        echo -e "${ERROR} Failed to start the light-node. Please check the logs for errors.${RESET}"
-        exit 1
-    fi
-
-    echo -e "${CHECKMARK} LayerEdge Node is running.${RESET}"
-    read -p "Press Enter to return to the main menu."
+    # Create a screen session for LayerEdge Node
+    screen -S layeredge -d -m bash -c "
+        echo '${PROGRESS} Starting LayerEdge Node...${RESET}' && 
+        chmod +x light-node && 
+        ./light-node
+    "
+    
+    echo -e "${CHECKMARK} LayerEdge Node is running in screen session.${RESET}"
+    echo -e "${INFO} To reattach to the LayerEdge node, run: screen -r layeredge${RESET}"
 }
+
 
 # ----------------------------
 # Main Menu
@@ -147,9 +169,10 @@ show_menu() {
     echo -e "    ${GREEN}LayerEdge Auto Bot Setup${RESET}"
     echo -e "    ${CYAN}1.${RESET} ${INSTALL} Install LayerEdge Node"
     echo -e "    ${CYAN}2.${RESET} ${INFO} Configure LayerEdge Node"
+    echo -e "    ${CYAN}4.${RESET} ${INFO} Run Merkle Service"
     echo -e "    ${CYAN}3.${RESET} ${RESTART} Start LayerEdge Node"
-    echo -e "    ${CYAN}4.${RESET} ${EXIT} Exit"
-    echo -ne "    ${YELLOW}Enter your choice [1-4]: ${RESET}"
+    echo -e "    ${CYAN}5.${RESET} ${EXIT} Exit"
+    echo -ne "    ${YELLOW}Enter your choice [1-5]: ${RESET}"
 }
 
 # ----------------------------
@@ -162,7 +185,8 @@ while true; do
         1) install_layeredge;;
         2) configure_layeredge;;
         3) start_node;;
-        4)
+        4) run_merkle;;
+        5)
             echo -e "${EXIT} Exiting...${RESET}"
             exit 0
             ;;
@@ -172,4 +196,3 @@ while true; do
             ;;
     esac
 done
-
