@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ----------------------------
-# Color Definitions
+# Color and Icon Definitions
 # ----------------------------
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -22,132 +22,162 @@ EXIT="🚪"
 INFO="ℹ️"
 ID="🆔"
 
+
 # ----------------------------
-# Install Node & Setup Functions
+# Install Pipe Node
 # ----------------------------
-install_layeredge() {
-    echo -e "${INSTALL} Installing LayerEdge Node...${RESET}"
+install_pipe_node() {
+    echo -e "${INSTALL} Installing Pipe Node...${RESET}"
     
-    # Update Server
-    echo -e "${PROGRESS} Updating server...${RESET}"
-    sudo apt update -y && sudo apt upgrade -y
+    # Ask user for parameters with minimal validations
+    read -p "Enter RAM value (minimum 4): " ram
+    if [[ $ram -lt 4 ]]; then
+        echo -e "${ERROR} RAM value must be at least 4. Aborting installation.${RESET}"
+        read -p "Press Enter to return to the main menu."
+        return
+    fi
 
-    # Install dependencies
-    echo -e "${PROGRESS} Installing necessary packages...${RESET}"
-    sudo apt install htop ca-certificates zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev tmux iptables curl nvme-cli git wget make jq libleveldb-dev build-essential pkg-config ncdu tar clang bsdmainutils lsb-release libssl-dev libreadline-dev libffi-dev jq gcc screen unzip lz4 -y
+    read -p "Enter max-disk value (minimum 100): " max_disk
+    if [[ $max_disk -lt 100 ]]; then
+        echo -e "${ERROR} max-disk must be at least 100. Aborting installation.${RESET}"
+        read -p "Press Enter to return to the main menu."
+        return
+    fi
 
-    # Install Go
-    echo -e "${PROGRESS} Installing Go...${RESET}"
-    wget https://go.dev/dl/go1.22.0.linux-amd64.tar.gz
-    sudo rm -rf /usr/local/go
-    sudo tar -C /usr/local -xzf go1.22.0.linux-amd64.tar.gz
-    echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc
-    source ~/.bashrc
-    go version
+    read -p "Enter SOLADDRESS: " soladdress
+    if [ -z "$soladdress" ]; then
+        echo -e "${ERROR} SOLADDRESS cannot be empty. Aborting installation.${RESET}"
+        read -p "Press Enter to return to the main menu."
+        return
+    fi
 
-    # Install Rust
-    echo -e "${PROGRESS} Installing Rust...${RESET}"
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-    source $HOME/.cargo/env
-    rustc --version
+    # Use current directory as working directory (no directory creation)
+    curr_dir=$(pwd)
 
-    # Install Risc0
-    echo -e "${PROGRESS} Installing Risc0...${RESET}"
-    curl -L https://risczero.com/install | bash
-    source "/root/.bashrc"
-    rzup install
-    rzup --version
+    # Download and set permission for the pop binary
+    wget -O pop "https://dl.pipecdn.app/v0.2.8/pop"
+    chmod +x pop
 
-    # Install Docker
-    echo -e "${PROGRESS} Installing Docker...${RESET}"
-    sudo apt install -y docker.io
-    sudo systemctl enable --now docker
-    sudo usermod -aG docker $(whoami)
-    docker --version
+    sudo ./pop  --ram ${ram}   --max-disk ${max_disk}  --cache-dir ${curr_dir}/download_cache --pubKey ${soladdress} --signup-by-referral-route 63b754eb97201984
 
-    # Clone LayerEdge Repo
-    echo -e "${PROGRESS} Cloning LayerEdge repository...${RESET}"
-    git clone https://github.com/Layer-Edge/light-node.git
-    cd light-node
+    # Create systemd service file for Pipe Node
+    sudo tee /etc/systemd/system/pipe.service > /dev/null << EOF
+[Unit]
+Description=Pipe Node Service
+After=network.target
+Wants=network-online.target
 
-    echo -e "${CHECKMARK} LayerEdge Node installation complete.${RESET}"
-}
+[Service]
+User=root
+Group=root
+WorkingDirectory=${curr_dir}
+ExecStart=${curr_dir}/pop \\
+    --ram ${ram} \\
+    --max-disk ${max_disk} \\
+    --cache-dir ${curr_dir}/download_cache \\
+    --pubKey ${soladdress} 
+Restart=always
+RestartSec=5
+LimitNOFILE=65536
+LimitNPROC=4096
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=pipe-node
 
-# ----------------------------
-# Configure LayerEdge Node
-# ----------------------------
-configure_layeredge() {
-    echo -e "${INFO} Configuring LayerEdge Node...${RESET}"
-
-    # Ask user for private key and configuration details
-    read -p "Enter your private key (without 0x): " private_key
-
-    echo -e "${PROGRESS} Editing .env file...${RESET}"
-    cat <<EOF > .env
-export GRPC_URL=34.31.74.109:9090
-export CONTRACT_ADDR=cosmos1ufs3tlq4umljk0qfe8k5ya0x6hpavn897u2cnf9k0en9jr7qarqqt56709
-export ZK_PROVER_URL=http://127.0.0.1:3001
-export API_REQUEST_TIMEOUT=100
-export POINTS_API=http://127.0.0.1:8080
-export PRIVATE_KEY='$private_key'
+[Install]
+WantedBy=multi-user.target
 EOF
 
-    echo -e "${CHECKMARK} Configuration complete.${RESET}"
-}
+    # Reload systemd and start the service
+    sudo systemctl daemon-reload
+    sudo systemctl enable pipe
+    sudo systemctl start pipe
 
-# ----------------------------
-# Start LayerEdge Node in Screen
-# ----------------------------
-start_node_in_screen() {
-    echo -e "${INFO} Starting LayerEdge Node in a new screen session...${RESET}"
-
-    # Create a new screen session and start the light-node process in it
-    screen -dmS light-node-session ./light-node
-
-    if [[ $? -eq 0 ]]; then
-        echo -e "${CHECKMARK} LayerEdge Node is running in screen session '${GREEN}light-node-session${RESET}'."
-        echo -e "${INFO} You can attach to the screen session with: ${CYAN}screen -r light-node-session${RESET}"
-    else
-        echo -e "${ERROR} Failed to start the screen session. Please check your system configuration.${RESET}"
-        exit 1
-    fi
-}
-
-# ----------------------------
-# Start LayerEdge Node (Standard)
-# ----------------------------
-start_node() {
-    echo -e "${INFO} Starting LayerEdge Node...${RESET}"
-
-    # Navigate to the correct directory if needed
-    cd ~/light-node || exit
-
-    # Ensure that the build and execute process is automated
-    echo -e "${PROGRESS} Building light-node...${RESET}"
-    go build
-    if [[ $? -ne 0 ]]; then
-        echo -e "${ERROR} Build failed! Please check the logs for errors.${RESET}"
-        exit 1
-    fi
-
-    # Set execute permission for the light-node binary
-    echo -e "${PROGRESS} Giving execute permissions to light-node...${RESET}"
-    chmod +x light-node
-    if [[ $? -ne 0 ]]; then
-        echo -e "${ERROR} Failed to set execute permissions. Please check your directory permissions.${RESET}"
-        exit 1
-    fi
-
-    # Start the light-node
-    echo -e "${INFO} Starting light-node...${RESET}"
-    ./light-node
-    if [[ $? -ne 0 ]]; then
-        echo -e "${ERROR} Failed to start the light-node. Please check the logs for errors.${RESET}"
-        exit 1
-    fi
-
-    echo -e "${CHECKMARK} LayerEdge Node is running.${RESET}"
+    echo -e "${CHECKMARK} Pipe Node installed and started successfully.${RESET}"
     read -p "Press Enter to return to the main menu."
+}
+
+# ----------------------------
+# Check Health of Pipe Node
+# ----------------------------
+check_health() {
+    echo -e "${INFO} Checking Pipe Node health...${RESET}"
+    sudo systemctl status pipe
+    read -p "Press Enter to return to the main menu."
+}
+
+# ----------------------------
+# Check Pipe Node Logs
+# ----------------------------
+check_logs() {
+    echo -e "${LOGS} Showing last 100 lines of Pipe Node logs...${RESET}"
+    journalctl -u pipe -n 30
+    read -p "Press Enter to return to the main menu."
+}
+
+# ----------------------------
+# Check Node Reputation / Status
+# ----------------------------
+check_node_status() {
+    echo -e "${INFO} Checking node reputation and status...${RESET}"
+    # Ensure we are in the proper directory
+    cd /root/pipe || return
+    ./pop --status
+    read -p "Press Enter to return to the main menu."
+}
+
+# ----------------------------
+# Display node_info.json
+# ----------------------------
+display_node_info() {
+    echo -e "${ID} Displaying node_info.json...${RESET}"
+    if [ -f /root/pipe/node_info.json ]; then
+        cat /root/pipe/node_info.json
+    else
+        echo -e "${ERROR} node_info.json not found in /root/pipe.${RESET}"
+    fi
+    read -p "Press Enter to return to the main menu."
+}
+
+# ----------------------------
+# Restart Pipe Node
+# ----------------------------
+restart_node() {
+    echo -e "${RESTART} Restarting Pipe Node...${RESET}"
+    sudo systemctl daemon-reload
+    sudo systemctl enable pipe
+    sudo systemctl restart pipe
+    echo -e "${CHECKMARK} Pipe Node restarted successfully.${RESET}"
+    read -p "Press Enter to return to the main menu."
+}
+
+# ----------------------------
+# Stop Pipe Node
+# ----------------------------
+stop_node() {
+    echo -e "${STOP} Stopping Pipe Node...${RESET}"
+    sudo systemctl stop pipe
+    echo -e "${CHECKMARK} Pipe Node stopped successfully.${RESET}"
+    read -p "Press Enter to return to the main menu."
+}
+
+# ----------------------------
+# Display ASCII Art Header
+# ----------------------------
+display_ascii() {
+    clear
+    echo -e "    ${RED}██╗  ██╗ █████╗ ███████╗ █████╗ ███╗   ██╗${NC}"
+    echo -e "    ${GREEN}██║  ██║██╔══██╗██╔════╝██╔══██╗████╗  ██║${NC}"
+    echo -e "    ${BLUE}███████║███████║███████╗███████║██╔██╗ ██║${NC}"
+    echo -e "    ${YELLOW}██╔══██║██╔══██║╚════██║██╔══██║██║╚██╗██║${NC}"
+    echo -e "    ${MAGENTA}██║  ██║██║  ██║███████║██║  ██║██║ ╚████║${NC}"
+    echo -e "    ${CYAN}╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝${NC}"
+    echo "================================================================"
+    echo -e "${CYAN}=== Telegram Channel : (CryptoAirdropHindi) (@CryptoAirdropHindi) ===${NC}"  
+    echo -e "${CYAN}=== Follow us on social media for updates and more ===${NC}"
+    echo -e "=== 📱 Telegram: https://t.me/CryptoAirdropHindi6 ==="
+    echo -e "=== 🎥 YouTube: https://www.youtube.com/@CryptoAirdropHindi6 ==="
+    echo -e "=== 💻 GitHub Repo: https://github.com/CryptoAirdropHindi/ ==="
 }
 
 # ----------------------------
@@ -155,19 +185,17 @@ start_node() {
 # ----------------------------
 show_menu() {
     clear
-    echo -e "    ${RED}██╗  ██╗ █████╗ ███████╗ █████╗ ███╗   ██╗${RESET}"
-    echo -e "    ${GREEN}██║  ██║██╔══██╗██╔════╝██╔══██╗████╗  ██║${RESET}"
-    echo -e "    ${BLUE}███████║███████║███████╗███████║██╔██╗ ██║${RESET}"
-    echo -e "    ${YELLOW}██╔══██║██╔══██║╚════██║██╔══██║██║╚██╗██║${RESET}"
-    echo -e "    ${MAGENTA}██║  ██║██║  ██║███████║██║  ██║██║ ╚████║${RESET}"
-    echo -e "    ${CYAN}╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝${RESET}"
-    echo -e "    ${RED}===============================${RESET}"
-    echo -e "    ${GREEN}LayerEdge Auto Bot Setup${RESET}"
-    echo -e "    ${CYAN}1.${RESET} ${INSTALL} Install LayerEdge Node"
-    echo -e "    ${CYAN}2.${RESET} ${INFO} Configure LayerEdge Node"
-    echo -e "    ${CYAN}3.${RESET} ${RESTART} Start LayerEdge Node in Screen"
-    echo -e "    ${CYAN}4.${RESET} ${EXIT} Exit"
-    echo -ne "    ${YELLOW}Enter your choice [1-4]: ${RESET}"
+    display_ascii
+    echo -e "    ${YELLOW}Choose an operation:${RESET}"
+    echo -e "    ${CYAN}1.${RESET} ${INSTALL} Install Pipe Node"
+    echo -e "    ${CYAN}2.${RESET} ${INFO} Check Node Health"
+    echo -e "    ${CYAN}3.${RESET} ${LOGS} Check Node Logs"
+    echo -e "    ${CYAN}4.${RESET} ${INFO} Check Node Reputation/Status"
+    echo -e "    ${CYAN}5.${RESET} ${ID} Display node_info.json"
+    echo -e "    ${CYAN}6.${RESET} ${RESTART} Restart Node"
+    echo -e "    ${CYAN}7.${RESET} ${STOP} Stop Node"
+    echo -e "    ${CYAN}8.${RESET} ${EXIT} Exit"
+    echo -ne "    ${YELLOW}Enter your choice [1-8]: ${RESET}"
 }
 
 # ----------------------------
@@ -177,10 +205,14 @@ while true; do
     show_menu
     read choice
     case $choice in
-        1) install_layeredge;;
-        2) configure_layeredge;;
-        3) start_node_in_screen;;
-        4)
+        1) install_pipe_node;;
+        2) check_health;;
+        3) check_logs;;
+        4) check_node_status;;
+        5) display_node_info;;
+        6) restart_node;;
+        7) stop_node;;
+        8)
             echo -e "${EXIT} Exiting...${RESET}"
             exit 0
             ;;
