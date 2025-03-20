@@ -103,8 +103,20 @@ start_node() {
 
     # Run LayerEdge node with screen
     screen -S layeredge
+
+    # Build the Go project
     go build
+    if [[ $? -ne 0 ]]; then
+        echo -e "${ERROR} Build failed! Please check the logs for errors.${RESET}"
+        exit 1
+    fi
+
+    # Run the node if the build succeeds
     ./light-node
+    if [[ $? -ne 0 ]]; then
+        echo -e "${ERROR} Failed to start the light-node. Please check the logs for errors.${RESET}"
+        exit 1
+    fi
 
     echo -e "${CHECKMARK} LayerEdge Node is running.${RESET}"
     read -p "Press Enter to return to the main menu."
