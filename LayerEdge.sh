@@ -58,12 +58,17 @@ install_layeredge() {
     rzup install
     rzup --version
 
-    # Install Docker
+ # Install Docker only if not already installed
+if ! command -v docker &> /dev/null; then
     echo -e "${PROGRESS} Installing Docker...${RESET}"
     sudo apt install -y docker.io
     sudo systemctl enable --now docker
     sudo usermod -aG docker $(whoami)
     docker --version
+else
+    echo -e "${CHECKMARK} Docker is already installed.${RESET}"
+fi
+
 
     # Clone LayerEdge Repo
     echo -e "${PROGRESS} Cloning LayerEdge repository...${RESET}"
