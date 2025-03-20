@@ -137,6 +137,12 @@ start_node() {
 # ----------------------------
 show_menu() {
     clear
+    echo -e "    ${RED}██╗  ██╗ █████╗ ███████╗ █████╗ ███╗   ██╗${NC}"
+    echo -e "    ${GREEN}██║  ██║██╔══██╗██╔════╝██╔══██╗████╗  ██║${NC}"
+    echo -e "    ${BLUE}███████║███████║███████╗███████║██╔██╗ ██║${NC}"
+    echo -e "    ${YELLOW}██╔══██║██╔══██║╚════██║██╔══██║██║╚██╗██║${NC}"
+    echo -e "    ${MAGENTA}██║  ██║██║  ██║███████║██║  ██║██║ ╚████║${NC}"
+    echo -e "    ${CYAN}╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝${NC}"
     echo -e "    ${RED}===============================${RESET}"
     echo -e "    ${GREEN}LayerEdge Auto Bot Setup${RESET}"
     echo -e "    ${CYAN}1.${RESET} ${INSTALL} Install LayerEdge Node"
