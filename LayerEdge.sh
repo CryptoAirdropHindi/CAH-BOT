@@ -96,7 +96,25 @@ EOF
 }
 
 # ----------------------------
-# Start LayerEdge Node
+# Start LayerEdge Node in Screen
+# ----------------------------
+start_node_in_screen() {
+    echo -e "${INFO} Starting LayerEdge Node in a new screen session...${RESET}"
+
+    # Create a new screen session and start the light-node process in it
+    screen -dmS light-node-session ./light-node
+
+    if [[ $? -eq 0 ]]; then
+        echo -e "${CHECKMARK} LayerEdge Node is running in screen session '${GREEN}light-node-session${RESET}'."
+        echo -e "${INFO} You can attach to the screen session with: ${CYAN}screen -r light-node-session${RESET}"
+    else
+        echo -e "${ERROR} Failed to start the screen session. Please check your system configuration.${RESET}"
+        exit 1
+    fi
+}
+
+# ----------------------------
+# Start LayerEdge Node (Standard)
 # ----------------------------
 start_node() {
     echo -e "${INFO} Starting LayerEdge Node...${RESET}"
@@ -137,17 +155,17 @@ start_node() {
 # ----------------------------
 show_menu() {
     clear
-    echo -e "    ${RED}██╗  ██╗ █████╗ ███████╗ █████╗ ███╗   ██╗${NC}"
-    echo -e "    ${GREEN}██║  ██║██╔══██╗██╔════╝██╔══██╗████╗  ██║${NC}"
-    echo -e "    ${BLUE}███████║███████║███████╗███████║██╔██╗ ██║${NC}"
-    echo -e "    ${YELLOW}██╔══██║██╔══██║╚════██║██╔══██║██║╚██╗██║${NC}"
-    echo -e "    ${MAGENTA}██║  ██║██║  ██║███████║██║  ██║██║ ╚████║${NC}"
-    echo -e "    ${CYAN}╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝${NC}"
+    echo -e "    ${RED}██╗  ██╗ █████╗ ███████╗ █████╗ ███╗   ██╗${RESET}"
+    echo -e "    ${GREEN}██║  ██║██╔══██╗██╔════╝██╔══██╗████╗  ██║${RESET}"
+    echo -e "    ${BLUE}███████║███████║███████╗███████║██╔██╗ ██║${RESET}"
+    echo -e "    ${YELLOW}██╔══██║██╔══██║╚════██║██╔══██║██║╚██╗██║${RESET}"
+    echo -e "    ${MAGENTA}██║  ██║██║  ██║███████║██║  ██║██║ ╚████║${RESET}"
+    echo -e "    ${CYAN}╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝${RESET}"
     echo -e "    ${RED}===============================${RESET}"
     echo -e "    ${GREEN}LayerEdge Auto Bot Setup${RESET}"
     echo -e "    ${CYAN}1.${RESET} ${INSTALL} Install LayerEdge Node"
     echo -e "    ${CYAN}2.${RESET} ${INFO} Configure LayerEdge Node"
-    echo -e "    ${CYAN}3.${RESET} ${RESTART} Start LayerEdge Node"
+    echo -e "    ${CYAN}3.${RESET} ${RESTART} Start LayerEdge Node in Screen"
     echo -e "    ${CYAN}4.${RESET} ${EXIT} Exit"
     echo -ne "    ${YELLOW}Enter your choice [1-4]: ${RESET}"
 }
@@ -161,7 +179,7 @@ while true; do
     case $choice in
         1) install_layeredge;;
         2) configure_layeredge;;
-        3) start_node;;
+        3) start_node_in_screen;;
         4)
             echo -e "${EXIT} Exiting...${RESET}"
             exit 0
