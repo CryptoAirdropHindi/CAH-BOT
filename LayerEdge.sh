@@ -100,9 +100,36 @@ EOF
     echo -e "${CHECKMARK} Configuration complete.${RESET}"
 }
 
-echo -e "🛠️ Building and running risc0-merkle-service..."
-cd risc0-merkle-service
-cargo build && screen -dmS risc0-service cargo run && echo -e "🚀 risc0-merkle-service is running in a screen session!"
+run_merkle() {
+    echo -e "${INFO} Starting Risc0 Merkle Service...${RESET}"
+    
+    # Navigate to the Risc0 Merkle Service directory
+    cd ~/light-node/risc0-merkle-service || { echo -e "${ERROR} Failed to navigate to Risc0 Merkle Service directory.${RESET}"; exit 1; }
+
+    # Build the service
+    echo -e "${PROGRESS} Building Risc0 Merkle Service...${RESET}"
+    cargo build
+    if [[ $? -ne 0 ]]; then
+        echo -e "${ERROR} Build failed! Please check the logs for errors.${RESET}"
+        exit 1
+    fi
+
+    # Start the service in a screen session
+    echo -e "${PROGRESS} Starting Risc0 Merkle Service in a screen session...${RESET}"
+    screen -S risc0-merkle -d -m bash -c "
+        echo '${PROGRESS} Starting Risc0 Merkle Service...${RESET}' && 
+        cargo run
+    "
+    
+    # Check if the screen session was created successfully
+    if screen -ls | grep -q "risc0-merkle"; then
+        echo -e "${CHECKMARK} Risc0 Merkle Service is running in screen session.${RESET}"
+        echo -e "${INFO} To reattach to the Risc0 Merkle Service, run: screen -r risc0-merkle${RESET}"
+    else
+        echo -e "${ERROR} Failed to start Risc0 Merkle Service in screen session.${RESET}"
+        exit 1
+    fi
+}
 
 # ----------------------------
 # Start LayerEdge Node in Screen
