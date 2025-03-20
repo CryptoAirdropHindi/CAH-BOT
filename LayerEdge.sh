@@ -101,17 +101,27 @@ EOF
 start_node() {
     echo -e "${INFO} Starting LayerEdge Node...${RESET}"
 
-    # Run LayerEdge node with screen
-    screen -S layeredge
+    # Navigate to the correct directory if needed
+    cd ~/light-node || exit
 
-    # Build the Go project
+    # Ensure that the build and execute process is automated
+    echo -e "${PROGRESS} Building light-node...${RESET}"
     go build
     if [[ $? -ne 0 ]]; then
         echo -e "${ERROR} Build failed! Please check the logs for errors.${RESET}"
         exit 1
     fi
 
-    # Run the node if the build succeeds
+    # Set execute permission for the light-node binary
+    echo -e "${PROGRESS} Giving execute permissions to light-node...${RESET}"
+    chmod +x light-node
+    if [[ $? -ne 0 ]]; then
+        echo -e "${ERROR} Failed to set execute permissions. Please check your directory permissions.${RESET}"
+        exit 1
+    fi
+
+    # Start the light-node
+    echo -e "${INFO} Starting light-node...${RESET}"
     ./light-node
     if [[ $? -ne 0 ]]; then
         echo -e "${ERROR} Failed to start the light-node. Please check the logs for errors.${RESET}"
@@ -127,12 +137,6 @@ start_node() {
 # ----------------------------
 show_menu() {
     clear
-    echo -e "    ${RED}██╗  ██╗ █████╗ ███████╗ █████╗ ███╗   ██╗${NC}"
-    echo -e "    ${GREEN}██║  ██║██╔══██╗██╔════╝██╔══██╗████╗  ██║${NC}"
-    echo -e "    ${BLUE}███████║███████║███████╗███████║██╔██╗ ██║${NC}"
-    echo -e "    ${YELLOW}██╔══██║██╔══██║╚════██║██╔══██║██║╚██╗██║${NC}"
-    echo -e "    ${MAGENTA}██║  ██║██║  ██║███████║██║  ██║██║ ╚████║${NC}"
-    echo -e "    ${CYAN}╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝${NC}"
     echo -e "    ${RED}===============================${RESET}"
     echo -e "    ${GREEN}LayerEdge Auto Bot Setup${RESET}"
     echo -e "    ${CYAN}1.${RESET} ${INSTALL} Install LayerEdge Node"
