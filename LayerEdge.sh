@@ -100,25 +100,9 @@ EOF
     echo -e "${CHECKMARK} Configuration complete.${RESET}"
 }
 
-# ----------------------------
-# Start Merkle Service in Screen
-# ----------------------------
-run_merkle() {
-    echo -e "${INFO} Starting Merkle Service in a screen session...${RESET}"
-
-    # Navigate to the Merkle service directory
-    cd ~/risc0-merkle-service || exit
-
-    # Create a screen session for Merkle Service
-    screen -S merkle -d -m bash -c "
-        echo '${PROGRESS} Starting Merkle Service...${RESET}' && 
-        cargo build && 
-        cargo run
-    "
-    
-    echo -e "${CHECKMARK} Merkle Service is running in screen session.${RESET}"
-    echo -e "${INFO} To reattach to the Merkle service, run: screen -r merkle${RESET}"
-}
+echo -e "🛠️ Building and running risc0-merkle-service..."
+cd risc0-merkle-service
+cargo build && screen -dmS risc0-service cargo run && echo -e "🚀 risc0-merkle-service is running in a screen session!"
 
 # ----------------------------
 # Start LayerEdge Node in Screen
