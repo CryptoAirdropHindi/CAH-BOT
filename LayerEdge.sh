@@ -26,7 +26,26 @@ ERROR='\033[1;31m'
 # ----------------------------
 install_rust() {
     echo -e "${INSTALL}Installing Rust...${NC}"
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+    echo -e "1) Proceed with standard installation (default - just press enter)"
+    echo -e "2) Customize installation"
+    echo -e "3) Cancel installation"
+    read -p "> " choice
+    case $choice in
+        1|"")
+            echo -e "\n" | curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+            ;;
+        2)
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+            ;;
+        3)
+            echo -e "${ERROR}Installation canceled.${NC}"
+            return
+            ;;
+        *)
+            echo -e "${ERROR}Invalid option. Installation canceled.${NC}"
+            return
+            ;;
+    esac
     source $HOME/.cargo/env
     echo -e "${GREEN}Rust installed successfully!${NC}"
     read -p "Press Enter to continue..."
