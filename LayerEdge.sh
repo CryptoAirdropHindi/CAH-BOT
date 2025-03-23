@@ -24,30 +24,42 @@ ERROR='\033[1;31m'
 # ----------------------------
 # Install Rust
 # ----------------------------
-install_rust() {
-    echo -e "${INSTALL}Installing Rust...${NC}"
-    echo -e "1) Proceed with standard installation (default - just press enter)"
-    echo -e "2) Customize installation"
-    echo -e "3) Cancel installation"
-    read -p "> " choice
-    case $choice in
-        1|"")
-            echo -e "\n" | curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-            ;;
-        2)
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-            ;;
-        3)
-            echo -e "${ERROR}Installation canceled.${NC}"
-            return
-            ;;
-        *)
-            echo -e "${ERROR}Invalid option. Installation canceled.${NC}"
-            return
-            ;;
-    esac
+Install Required Dependencies() {
+    echo -e "${INSTALL}Install Required Dependencies...${NC}"
+# Update and upgrade the system
+echo "Updating and upgrading the system..."
+sudo apt update && sudo apt upgrade -y
+
+# Install required dependencies
+echo "Installing required dependencies..."
+sudo apt install -y nano screen build-essential gcc
+
+# Install Go
+echo "Installing Go..."
+sudo rm -rf /usr/local/go
+curl -L https://go.dev/dl/go1.22.4.linux-amd64.tar.gz | sudo tar -xzf - -C /usr/local
+echo 'export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin' >> $HOME/.bash_profile
+echo 'export PATH=$PATH:$(go env GOPATH)/bin' >> $HOME/.bash_profile
+source $HOME/.bash_profile
+go version
+
+    # Install Rust
+    echo "Installing Rust..."
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
     source $HOME/.cargo/env
-    echo -e "${GREEN}Rust installed successfully!${NC}"
+
+    # Install Risc0 Toolchain
+    echo "Installing Risc0 Toolchain..."
+    curl -L https://risczero.com/install | bash
+    source "$HOME/.bashrc"
+    rzup install
+    source "$HOME/.bashrc"
+
+    # Install Cargo (if not already installed)
+    echo "Installing Cargo..."
+    sudo apt install -y cargo
+
+    echo -e "${GREEN}Install Required Dependencies installed successfully!${NC}"
     read -p "Press Enter to continue..."
 }
 
@@ -149,7 +161,7 @@ show_menu() {
     clear
     display_ascii
     echo -e "    ${YELLOW}Choose an operation:${RESET}"
-    echo -e "    ${CYAN}1.${RESET} ${INSTALL} Install Rust"
+    echo -e "    ${CYAN}1.${RESET} ${INSTALL} Install Required Dependencies"
     echo -e "    ${CYAN}2.${RESET} ${INFO} Light Node Install"
     echo -e "    ${CYAN}3.${RESET} ${LOGS} Configure Private Key"
     echo -e "    ${CYAN}4.${RESET} ${INFO} Start the Merkle Service"
@@ -167,7 +179,7 @@ while true; do
     show_menu
     read choice
     case $choice in
-        1) install_rust;;
+        1) Install_Required_Dependencies;;
         2) light_node_install;;
         3) configure_private_key;;
         4) start_merkle_service;;
