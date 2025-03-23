@@ -20,28 +20,27 @@ STOP='\033[1;31m'
 EXIT='\033[1;31m'
 ERROR='\033[1;31m'
 
-
 # ----------------------------
-# Install Rust
+# Install Required Dependencies
 # ----------------------------
-Install Required Dependencies() {
-    echo -e "${INSTALL}Install Required Dependencies...${NC}"
-# Update and upgrade the system
-echo "Updating and upgrading the system..."
-sudo apt update && sudo apt upgrade -y
+install_required_dependencies() {
+    echo -e "${INSTALL}Installing Required Dependencies...${NC}"
+    # Update and upgrade the system
+    echo "Updating and upgrading the system..."
+    sudo apt update && sudo apt upgrade -y
 
-# Install required dependencies
-echo "Installing required dependencies..."
-sudo apt install -y nano screen build-essential gcc
+    # Install required dependencies
+    echo "Installing required dependencies..."
+    sudo apt install -y nano screen build-essential gcc
 
-# Install Go
-echo "Installing Go..."
-sudo rm -rf /usr/local/go
-curl -L https://go.dev/dl/go1.22.4.linux-amd64.tar.gz | sudo tar -xzf - -C /usr/local
-echo 'export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin' >> $HOME/.bash_profile
-echo 'export PATH=$PATH:$(go env GOPATH)/bin' >> $HOME/.bash_profile
-source $HOME/.bash_profile
-go version
+    # Install Go
+    echo "Installing Go..."
+    sudo rm -rf /usr/local/go
+    curl -L https://go.dev/dl/go1.22.4.linux-amd64.tar.gz | sudo tar -xzf - -C /usr/local
+    echo 'export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin' >> $HOME/.bash_profile
+    echo 'export PATH=$PATH:$(go env GOPATH)/bin' >> $HOME/.bash_profile
+    source $HOME/.bash_profile
+    go version
 
     # Install Rust
     echo "Installing Rust..."
@@ -59,7 +58,7 @@ go version
     echo "Installing Cargo..."
     sudo apt install -y cargo
 
-    echo -e "${GREEN}Install Required Dependencies installed successfully!${NC}"
+    echo -e "${GREEN}Required Dependencies installed successfully!${NC}"
     read -p "Press Enter to continue..."
 }
 
@@ -78,21 +77,22 @@ light_node_install() {
 # Configure Private Key
 # ----------------------------
 configure_private_key() {
-echo -e "${LOGS}Configuring Private Key...${NC}"
+    echo -e "${LOGS}Configuring Private Key...${NC}"
 
-# Ask user for private key and configuration details
-read -p "Enter your private key (without 0x): " private_key
+    # Ask user for private key and configuration details
+    read -p "Enter your private key (without 0x): " private_key
 
-echo -e "${PROGRESS} Editing .env file...${RESET}"
-cat <<EOF > .env
+    echo -e "${PROGRESS} Editing .env file...${RESET}"
+    cat <<EOF > .env
 export GRPC_URL=34.31.74.109:9090
 export CONTRACT_ADDR=cosmos1ufs3tlq4umljk0qfe8k5ya0x6hpavn897u2cnf9k0en9jr7qarqqt56709
 export ZK_PROVER_URL=http://127.0.0.1:3001
 export API_REQUEST_TIMEOUT=100
 export POINTS_API=http://127.0.0.1:8080
 export PRIVATE_KEY='$private_key'
-echo -e "${GREEN}Private Key configured successfully!${NC}"
-read -p "Press Enter to continue..."
+EOF
+    echo -e "${GREEN}Private Key configured successfully!${NC}"
+    read -p "Press Enter to continue..."
 }
 
 # ----------------------------
@@ -179,7 +179,7 @@ while true; do
     show_menu
     read choice
     case $choice in
-        1) Install_Required_Dependencies;;
+        1) install_required_dependencies;;
         2) light_node_install;;
         3) configure_private_key;;
         4) start_merkle_service;;
