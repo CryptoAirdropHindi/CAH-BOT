@@ -66,10 +66,21 @@ light_node_install() {
 # Configure Private Key
 # ----------------------------
 configure_private_key() {
-    echo -e "${LOGS}Configuring Private Key...${NC}"
-    nano .env
-    echo -e "${GREEN}Private Key configured successfully!${NC}"
-    read -p "Press Enter to continue..."
+echo -e "${LOGS}Configuring Private Key...${NC}"
+
+# Ask user for private key and configuration details
+read -p "Enter your private key (without 0x): " private_key
+
+echo -e "${PROGRESS} Editing .env file...${RESET}"
+cat <<EOF > .env
+export GRPC_URL=34.31.74.109:9090
+export CONTRACT_ADDR=cosmos1ufs3tlq4umljk0qfe8k5ya0x6hpavn897u2cnf9k0en9jr7qarqqt56709
+export ZK_PROVER_URL=http://127.0.0.1:3001
+export API_REQUEST_TIMEOUT=100
+export POINTS_API=http://127.0.0.1:8080
+export PRIVATE_KEY='$private_key'
+echo -e "${GREEN}Private Key configured successfully!${NC}"
+read -p "Press Enter to continue..."
 }
 
 # ----------------------------
