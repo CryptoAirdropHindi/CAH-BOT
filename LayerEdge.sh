@@ -6,157 +6,110 @@
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
-CYAN='\033[0;36m'
 YELLOW='\033[1;33m'
-MAGENTA='\033[0;35m'
+MAGENTA='\033[1;35m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
 RESET='\033[0m'
+INSTALL='\033[1;32m'
+INFO='\033[1;34m'
+LOGS='\033[1;33m'
+ID='\033[1;36m'
+RESTART='\033[1;35m'
+STOP='\033[1;31m'
+EXIT='\033[1;31m'
+ERROR='\033[1;31m'
 
-CHECKMARK="✅"
-ERROR="❌"
-PROGRESS="⏳"
-INSTALL="🛠️"
-STOP="⏹️"
-RESTART="🔄"
-LOGS="📄"
-EXIT="🚪"
-INFO="ℹ️"
-ID="🆔"
 
 # ----------------------------
-# Install Node & Setup Functions
+# Install Rust
 # ----------------------------
-install_layeredge() {
-    echo -e "${INSTALL} Installing LayerEdge Node...${RESET}"
-    
-    # Update Server
-    echo -e "${PROGRESS} Updating server...${RESET}"
-    sudo apt update -y && sudo apt upgrade -y
-
-    # Install dependencies
-    echo -e "${PROGRESS} Installing necessary packages...${RESET}"
-    sudo apt install htop ca-certificates zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev tmux iptables curl nvme-cli git wget make jq libleveldb-dev build-essential pkg-config ncdu tar clang bsdmainutils lsb-release libssl-dev libreadline-dev libffi-dev jq gcc screen unzip lz4 -y
-
-    # Install Go
-    echo -e "${PROGRESS} Installing Go...${RESET}"
-    wget https://go.dev/dl/go1.22.0.linux-amd64.tar.gz
-    sudo rm -rf /usr/local/go
-    sudo tar -C /usr/local -xzf go1.22.0.linux-amd64.tar.gz
-    echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc
-    source ~/.bashrc
-    go version
-
-    # Install Rust
-    echo -e "${PROGRESS} Installing Rust...${RESET}"
+install_rust() {
+    echo -e "${INSTALL}Installing Rust...${NC}"
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
     source $HOME/.cargo/env
-    rustc --version
+    echo -e "${GREEN}Rust installed successfully!${NC}"
+    read -p "Press Enter to continue..."
+}
 
-    # Install Risc0
-    echo -e "${PROGRESS} Installing Risc0...${RESET}"
-    curl -L https://risczero.com/install | bash
-    source "/root/.bashrc"
-    rzup install
-    rzup --version
-
- # Install Docker only if not already installed
-if ! command -v docker &> /dev/null; then
-    echo -e "${PROGRESS} Installing Docker...${RESET}"
-    sudo apt install -y docker.io
-    sudo systemctl enable --now docker
-    sudo usermod -aG docker $(whoami)
-    docker --version
-else
-    echo -e "${CHECKMARK} Docker is already installed.${RESET}"
-fi
-
-
-    # Clone LayerEdge Repo
-    echo -e "${PROGRESS} Cloning LayerEdge repository...${RESET}"
-    git clone https://github.com/Layer-Edge/light-node.git
+# ----------------------------
+# Light Node Install
+# ----------------------------
+light_node_install() {
+    echo -e "${INFO}Installing Light Node...${NC}"
+    git clone https://github.com/Layer-Edge/light-node
     cd light-node
-
-    echo -e "${CHECKMARK} LayerEdge Node installation complete.${RESET}"
+    echo -e "${GREEN}Light Node installed successfully!${NC}"
+    read -p "Press Enter to continue..."
 }
 
 # ----------------------------
-# Configure LayerEdge Node
+# Configure Private Key
 # ----------------------------
-configure_layeredge() {
-    echo -e "${INFO} Configuring LayerEdge Node...${RESET}"
-
-    # Ask user for private key and configuration details
-    read -p "Enter your private key (without 0x): " private_key
-
-    echo -e "${PROGRESS} Editing .env file...${RESET}"
-    cat <<EOF > .env
-export GRPC_URL=34.31.74.109:9090
-export CONTRACT_ADDR=cosmos1ufs3tlq4umljk0qfe8k5ya0x6hpavn897u2cnf9k0en9jr7qarqqt56709
-export ZK_PROVER_URL=http://127.0.0.1:3001
-export API_REQUEST_TIMEOUT=100
-export POINTS_API=http://127.0.0.1:8080
-export PRIVATE_KEY='$private_key'
-EOF
-
-    echo -e "${CHECKMARK} Configuration complete.${RESET}"
-}
-
-run_merkle() {
-    echo -e "${INFO} Starting Risc0 Merkle Service...${RESET}"
-    
-    # Navigate to the Risc0 Merkle Service directory
-    cd ~/light-node/risc0-merkle-service || { echo -e "${ERROR} Failed to navigate to Risc0 Merkle Service directory.${RESET}"; exit 1; }
-
-    # Build the service
-    echo -e "${PROGRESS} Building Risc0 Merkle Service...${RESET}"
-    cargo build
-    if [[ $? -ne 0 ]]; then
-        echo -e "${ERROR} Build failed! Please check the logs for errors.${RESET}"
-        exit 1
-    fi
-
-    # Start the service in a screen session
-    echo -e "${PROGRESS} Starting Risc0 Merkle Service in a screen session...${RESET}"
-    screen -S risc0-merkle -d -m bash -c "
-        echo '${PROGRESS} Starting Risc0 Merkle Service...${RESET}' && 
-        cargo run
-    "
-    
-    # Check if the screen session was created successfully
-    if screen -ls | grep -q "risc0-merkle"; then
-        echo -e "${CHECKMARK} Risc0 Merkle Service is running in screen session.${RESET}"
-        echo -e "${INFO} To reattach to the Risc0 Merkle Service, run: screen -r risc0-merkle${RESET}"
-    else
-        echo -e "${ERROR} Failed to start Risc0 Merkle Service in screen session.${RESET}"
-        exit 1
-    fi
+configure_private_key() {
+    echo -e "${LOGS}Configuring Private Key...${NC}"
+    nano .env
+    echo -e "${GREEN}Private Key configured successfully!${NC}"
+    read -p "Press Enter to continue..."
 }
 
 # ----------------------------
-# Start LayerEdge Node in Screen
+# Start the Merkle Service
 # ----------------------------
-start_node() {
-    echo -e "${INFO} Starting LayerEdge Node in a screen session...${RESET}"
+start_merkle_service() {
+    echo -e "${INFO}Starting Merkle Service...${NC}"
+    screen -S rsic -dm bash -c 'cd $HOME/light-node/risc0-merkle-service; cargo build && cargo run'
+    echo -e "${GREEN}Merkle Service started in a screen session. Use 'screen -r rsic' to attach.${NC}"
+    read -p "Press Enter to continue..."
+}
 
-    # Navigate to the correct directory if needed
-    cd ~/light-node || exit
+# ----------------------------
+# Run the LayerEdge Light Node
+# ----------------------------
+run_light_node() {
+    echo -e "${ID}Running LayerEdge Light Node...${NC}"
+    screen -S lightnode -dm bash -c 'cd $HOME/light-node; go build; ./light-node'
+    echo -e "${GREEN}Light Node started in a screen session. Use 'screen -r lightnode' to attach.${NC}"
+    read -p "Press Enter to continue..."
+}
 
-    # Ensure that the build and execute process is automated
-    echo -e "${PROGRESS} Building light-node...${RESET}"
-    go build
-    if [[ $? -ne 0 ]]; then
-        echo -e "${ERROR} Build failed! Please check the logs for errors.${RESET}"
-        exit 1
-    fi
+# ----------------------------
+# Check Logs
+# ----------------------------
+check_logs() {
+    echo -e "${RESTART}Checking logs...${NC}"
+    sudo journalctl -fu lightnode.service
+    read -p "Press Enter to continue..."
+}
 
-    # Create a screen session for LayerEdge Node
-    screen -S layeredge -d -m bash -c "
-        echo '${PROGRESS} Starting LayerEdge Node...${RESET}' && 
-        chmod +x light-node && 
-        ./light-node
-    "
-    
-    echo -e "${CHECKMARK} LayerEdge Node is running in screen session.${RESET}"
-    echo -e "${INFO} To reattach to the LayerEdge node, run: screen -r layeredge${RESET}"
+# ----------------------------
+# Fetch Points via CLI
+# ----------------------------
+fetch_points() {
+    echo -e "${STOP}Fetching Points...${NC}"
+    read -p "Enter your wallet address: " wallet_address
+    curl "https://light-node.layeredge.io/api/cli-node/points/${wallet_address}"
+    echo -e "${GREEN}Points fetched successfully!${NC}"
+    read -p "Press Enter to continue..."
+}
+
+# ----------------------------
+# Display ASCII Art Header
+# ----------------------------
+display_ascii() {
+    clear
+    echo -e "    ${RED}██╗  ██╗ █████╗ ███████╗ █████╗ ███╗   ██╗${NC}"
+    echo -e "    ${GREEN}██║  ██║██╔══██╗██╔════╝██╔══██╗████╗  ██║${NC}"
+    echo -e "    ${BLUE}███████║███████║███████╗███████║██╔██╗ ██║${NC}"
+    echo -e "    ${YELLOW}██╔══██║██╔══██║╚════██║██╔══██║██║╚██╗██║${NC}"
+    echo -e "    ${MAGENTA}██║  ██║██║  ██║███████║██║  ██║██║ ╚████║${NC}"
+    echo -e "    ${CYAN}╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝${NC}"
+    echo "================================================================"
+    echo -e "${CYAN}=== Telegram Channel : (CryptoAirdropHindi) (@CryptoAirdropHindi) ===${NC}"  
+    echo -e "${CYAN}=== Follow us on social media for updates and more ===${NC}"
+    echo -e "=== 📱 Telegram: https://t.me/CryptoAirdropHindi6 ==="
+    echo -e "=== 🎥 YouTube: https://www.youtube.com/@CryptoAirdropHindi6 ==="
+    echo -e "=== 💻 GitHub Repo: https://github.com/CryptoAirdropHindi/ ==="
 }
 
 # ----------------------------
@@ -164,20 +117,17 @@ start_node() {
 # ----------------------------
 show_menu() {
     clear
-    echo -e "    ${RED}██╗  ██╗ █████╗ ███████╗ █████╗ ███╗   ██╗${RESET}"
-    echo -e "    ${GREEN}██║  ██║██╔══██╗██╔════╝██╔══██╗████╗  ██║${RESET}"
-    echo -e "    ${BLUE}███████║███████║███████╗███████║██╔██╗ ██║${RESET}"
-    echo -e "    ${YELLOW}██╔══██║██╔══██║╚════██║██╔══██║██║╚██╗██║${RESET}"
-    echo -e "    ${MAGENTA}██║  ██║██║  ██║███████║██║  ██║██║ ╚████║${RESET}"
-    echo -e "    ${CYAN}╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝${RESET}"
-    echo -e "    ${RED}===============================${RESET}"
-    echo -e "    ${GREEN}LayerEdge Auto Bot Setup${RESET}"
-    echo -e "    ${CYAN}1.${RESET} ${INSTALL} Install LayerEdge Node"
-    echo -e "    ${CYAN}2.${RESET} ${INFO} Configure LayerEdge Node"
-    echo -e "    ${CYAN}3.${RESET} ${INFO} Run Merkle Service"
-    echo -e "    ${CYAN}4.${RESET} ${RESTART} Start LayerEdge Node"
-    echo -e "    ${CYAN}5.${RESET} ${EXIT} Exit"
-    echo -ne "    ${YELLOW}Enter your choice [1-5]: ${RESET}"
+    display_ascii
+    echo -e "    ${YELLOW}Choose an operation:${RESET}"
+    echo -e "    ${CYAN}1.${RESET} ${INSTALL} Install Rust"
+    echo -e "    ${CYAN}2.${RESET} ${INFO} Light Node Install"
+    echo -e "    ${CYAN}3.${RESET} ${LOGS} Configure Private Key"
+    echo -e "    ${CYAN}4.${RESET} ${INFO} Start the Merkle Service"
+    echo -e "    ${CYAN}5.${RESET} ${ID} Run the LayerEdge Light Node"
+    echo -e "    ${CYAN}6.${RESET} ${RESTART} Check logs"
+    echo -e "    ${CYAN}7.${RESET} ${STOP} Fetch Points via CLI"
+    echo -e "    ${CYAN}8.${RESET} ${EXIT} Exit"
+    echo -ne "    ${YELLOW}Enter your choice [1-8]: ${RESET}"
 }
 
 # ----------------------------
@@ -187,11 +137,14 @@ while true; do
     show_menu
     read choice
     case $choice in
-        1) install_layeredge;;
-        2) configure_layeredge;;
-        3) run_merkle;;
-        4) start_node;;
-        5)
+        1) install_rust;;
+        2) light_node_install;;
+        3) configure_private_key;;
+        4) start_merkle_service;;
+        5) run_light_node;;
+        6) check_logs;;
+        7) fetch_points;;
+        8)
             echo -e "${EXIT} Exiting...${RESET}"
             exit 0
             ;;
