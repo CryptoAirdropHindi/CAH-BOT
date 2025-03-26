@@ -1,85 +1,125 @@
 #!/bin/bash
 
-# One-Click Installer for Seismic Devnet Deployment
-set -e
-
 # ----------------------------
-# Color Definitions
+# Colors for terminal output
 # ----------------------------
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 YELLOW='\033[1;33m'
-MAGENTA='\033[0;35m'
+MAGENTA='\033[1;35m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 RESET='\033[0m'
 
 # ----------------------------
-# Text Elements
-# ----------------------------
-INSTALL="${GREEN}Install Seismic Devnet${NC}"
-INFO="${CYAN}View Node Information${NC}"
-LOGS="${YELLOW}View Logs${NC}"
-RESTART="${BLUE}Restart Services${NC}"
-STOP="${RED}Stop Services${NC}"
-EXIT="${MAGENTA}Exit${NC}"
-ERROR="${RED}Error${NC}"
-
-# ----------------------------
-# Installation Function
+# Install Seismic Foundry
 # ----------------------------
 install_seismic() {
-    echo -e "${GREEN}Starting Seismic Devnet installation...${NC}"
-    
-    # Update & install dependencies
-    echo "Updating system and installing dependencies..."
-    apt update && apt install -y curl jq unzip
+    echo -e "${YELLOW}🚀 Installing Seismic Foundry...${NC}"
 
-    # Install Rust
-    echo "Installing Rust..."
-    curl https://sh.rustup.rs -sSf | sh -s -- -y
-    source "$HOME/.cargo/env"
+    # 0. Install system dependencies
+    echo -e "${CYAN}🔧 Installing system dependencies...${NC}"
+    if [[ -f /etc/debian_version ]]; then
+        sudo apt update
+        sudo apt install -y build-essential
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        # Ensure Xcode command line tools are installed on macOS
+        xcode-select --install || true
+    fi
 
-    # Install sfoundryup
-    echo "Installing sfoundryup..."
-    curl -L -H "Accept: application/vnd.github.v3.raw" \
+    # 1. Install Rust (if not installed)
+    if ! command -v rustc &> /dev/null; then
+        echo -e "${CYAN}🔧 Installing Rust...${NC}"
+        curl https://sh.rustup.rs -sSf | sh -s -- -y
+        source "$HOME/.cargo/env"
+    else
+        echo -e "${GREEN}✅ Rust already installed.${NC}"
+    fi
+
+    # 2. Install jq (JSON processor)
+    if ! command -v jq &> /dev/null; then
+        echo -e "${CYAN}🔧 Installing jq...${NC}"
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            brew install jq
+        elif [[ -f /etc/debian_version ]]; then
+            sudo apt-get update && sudo apt-get install -y jq
+        else
+            echo -e "${RED}❌ Unsupported OS. Install jq manually: https://stedolan.github.io/jq/download/${NC}"
+            exit 1
+        fi
+    else
+        echo -e "${GREEN}✅ jq already installed.${NC}"
+    fi
+
+    # 3. Install sfoundryup
+    echo -e "${CYAN}🔧 Installing sfoundryup...${NC}"
+    curl -L \
+         -H "Accept: application/vnd.github.v3.raw" \
          "https://api.github.com/repos/SeismicSystems/seismic-foundry/contents/sfoundryup/install?ref=seismic" | bash
-    source ~/.bashrc
+    source ~/.bashrc || source ~/.zshrc
 
-    # Run sfoundryup
-    echo "Running sfoundryup... This may take some time."
+    # 4. Run sfoundryup
+    echo -e "${YELLOW}⏳ Setting up Seismic Foundry (may take 5-60 mins)...${NC}"
     sfoundryup
 
-    # Clone Seismic Devnet repository
-    echo "Cloning Seismic Devnet repository..."
-    git clone --recurse-submodules https://github.com/SeismicSystems/try-devnet.git
-    cd try-devnet/packages/contract/
-
-    # Deploy contract
-    echo "Deploying contract..."
-    bash script/deploy.sh
-
-    # Install Bun
-    echo "Installing Bun..."
-    curl -fsSL https://bun.sh/install | bash
-    source ~/.bashrc
-
-    # Install Node dependencies
-    echo "Installing Node dependencies..."
-    cd ../cli/
-    bun install
-
-    # Execute transactions
-    echo "Executing transactions..."
-    bash script/transact.sh
-
-    echo -e "${GREEN}✅ Seismic Devnet setup & deployment completed successfully!${NC}"
-    read -p "Press Enter to return to main menu..."
+    echo -e "${GREEN}🎉 Seismic Foundry installed successfully!${NC}"
+    read -p "Press Enter to continue..."
 }
 
 # ----------------------------
-# Display ASCII Art Header
+# Deploy Encrypted Contract
+# ----------------------------
+deploy_contract() {
+    echo -e "${YELLOW}🚀 Deploying encrypted contract...${NC}"
+
+    # 5. Clone repository
+    if [ ! -d "try-devnet" ]; then
+        echo -e "${CYAN}🔧 Cloning try-devnet repository...${NC}"
+        git clone --recurse-submodules https://github.com/SeismicSystems/try-devnet.git
+    else
+        echo -e "${GREEN}✅ try-devnet already exists. Pulling latest changes...${NC}"
+        cd try-devnet && git pull && git submodule update --init --recursive && cd ..
+    fi
+
+    # 6. Deploy contract
+    echo -e "${CYAN}🔧 Deploying contract...${NC}"
+    cd try-devnet/packages/contract/
+    bash script/deploy.sh
+    cd ../../
+
+    echo -e "${GREEN}🎉 Contract deployed successfully
+
+# ----------------------------
+# Interact with Contract
+# ----------------------------
+interact_contract() {
+    echo -e "${YELLOW}🔗 Interacting with contract...${NC}"
+
+    # 1. Install Bun (if not installed)
+    if ! command -v bun &> /dev/null; then
+        echo -e "${CYAN}🔧 Installing Bun...${NC}"
+        curl -fsSL https://bun.sh/install | bash
+        source ~/.bashrc || source ~/.zshrc
+    else
+        echo -e "${GREEN}✅ Bun already installed.${NC}"
+    fi
+
+    # 2. Install dependencies
+    echo -e "${CYAN}📦 Installing Node dependencies...${NC}"
+    cd try-devnet/packages/cli/
+    bun install
+
+    # 3. Send transactions
+    echo -e "${YELLOW}💸 Sending test transactions...${NC}"
+    bash script/transact.sh
+
+    echo -e "${GREEN}🎉 Transactions executed successfully!${NC}"
+    read -p "Press Enter to continue..."
+}
+
+# ----------------------------
+# ASCII Art Header
 # ----------------------------
 display_ascii() {
     clear
@@ -97,24 +137,19 @@ display_ascii() {
     echo -e "=== 💻 GitHub Repo: https://github.com/CryptoAirdropHindi/ ==="
 }
 
+
 # ----------------------------
 # Main Menu
 # ----------------------------
 show_menu() {
-    clear
     display_ascii
     echo -e "    ${YELLOW}Choose an operation:${RESET}"
-    echo -e "    ${CYAN}1.${RESET} ${INSTALL} "
-    echo -e "    ${CYAN}2.${RESET} ${INFO} "
-    echo -e "    ${CYAN}3.${RESET} ${LOGS} "
-    echo -e "    ${CYAN}4.${RESET} ${INFO} "
-    echo -e "    ${CYAN}5.${RESET} ${INFO} "
-    echo -e "    ${CYAN}6.${RESET} ${RESTART} "
-    echo -e "    ${CYAN}7.${RESET} ${STOP} "
-    echo -e "    ${CYAN}8.${RESET} ${EXIT} Exit"
-    echo -ne "    ${YELLOW}Enter your choice [1-8]: ${RESET}"
+    echo -e "    ${CYAN}1.${RESET} Install Seismic Foundry"
+    echo -e "    ${CYAN}2.${RESET} Deploy Encrypted Contract"
+    echo -e "    ${CYAN}3.${RESET} Interact with Contract"
+    echo -e "    ${CYAN}5.${RESET} Exit"
+    echo -ne "    ${YELLOW}Enter your choice [1-5]: ${RESET}"
 }
-
 
 # ----------------------------
 # Main Loop
@@ -127,35 +162,17 @@ while true; do
             install_seismic
             ;;
         2) 
-            echo -e "${CYAN}Node information will be displayed here...${NC}"
-            read -p "Press Enter to continue..."
+            deploy_contract
             ;;
         3) 
-            echo -e "${YELLOW}Logs will be displayed here...${NC}"
-            read -p "Press Enter to continue..."
+            interact_contract
             ;;
-        4) 
-            echo -e "${CYAN}Additional information will be displayed here...${NC}"
-            read -p "Press Enter to continue..."
-            ;;
-        5) 
-            echo -e "${CYAN}Node ID information will be displayed here...${NC}"
-            read -p "Press Enter to continue..."
-            ;;
-        6) 
-            echo -e "${BLUE}Restarting services...${NC}"
-            read -p "Press Enter to continue..."
-            ;;
-        7) 
-            echo -e "${RED}Stopping services...${NC}"
-            read -p "Press Enter to continue..."
-            ;;
-        8)
-            echo -e "${EXIT} Exiting...${RESET}"
+        5)
+            echo -e "${RED}👋 Exiting...${RESET}"
             exit 0
             ;;
         *)
-            echo -e "${ERROR} Invalid option. Please try again.${RESET}"
+            echo -e "${RED}❌ Invalid option. Please try again.${RESET}"
             read -p "Press Enter to continue..."
             ;;
     esac
