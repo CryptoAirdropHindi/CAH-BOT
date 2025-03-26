@@ -98,6 +98,11 @@ deploy_contract() {
 interact_contract() {
     echo -e "${YELLOW}🔗 Interacting with contract...${NC}"
 
+    # Update and install zip (if not installed)
+    echo -e "${CYAN}🔄 Updating packages and installing zip...${NC}"
+    sudo apt update
+    sudo apt install zip -y
+
     # 1. Install Bun (if not installed)
     if ! command -v bun &> /dev/null; then
         echo -e "${CYAN}🔧 Installing Bun...${NC}"
