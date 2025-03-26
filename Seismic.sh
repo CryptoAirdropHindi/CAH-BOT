@@ -126,6 +126,41 @@ interact_contract() {
 }
 
 # ----------------------------
+# Check Logs
+# ----------------------------
+check_logs() {
+    echo -e "${YELLOW}📜 Checking logs...${NC}"
+    
+    # Check if try-devnet directory exists
+    if [ ! -d "try-devnet" ]; then
+        echo -e "${RED}❌ try-devnet directory not found. Please deploy a contract first.${NC}"
+        read -p "Press Enter to continue..."
+        return
+    fi
+    
+    # Check for log files
+    if [ -f "try-devnet/packages/contract/logs/deploy.log" ]; then
+        echo -e "${GREEN}✅ Deployment logs found:${NC}"
+        echo -e "${CYAN}====== Deployment Logs ======${NC}"
+        cat try-devnet/packages/contract/logs/deploy.log
+        echo -e "${CYAN}============================${NC}"
+    else
+        echo -e "${YELLOW}⚠️ No deployment logs found.${NC}"
+    fi
+    
+    if [ -f "try-devnet/packages/cli/logs/transactions.log" ]; then
+        echo -e "${GREEN}✅ Transaction logs found:${NC}"
+        echo -e "${CYAN}====== Transaction Logs ======${NC}"
+        cat try-devnet/packages/cli/logs/transactions.log
+        echo -e "${CYAN}=============================${NC}"
+    else
+        echo -e "${YELLOW}⚠️ No transaction logs found.${NC}"
+    fi
+    
+    read -p "Press Enter to continue..."
+}
+
+# ----------------------------
 # ASCII Art Header
 # ----------------------------
 display_ascii() {
@@ -153,6 +188,7 @@ show_menu() {
     echo -e "    ${CYAN}1.${RESET} Install Seismic Foundry"
     echo -e "    ${CYAN}2.${RESET} Deploy Encrypted Contract"
     echo -e "    ${CYAN}3.${RESET} Interact with Contract"
+    echo -e "    ${CYAN}4.${RESET} Check Logs"
     echo -e "    ${CYAN}5.${RESET} Exit"
     echo -ne "    ${YELLOW}Enter your choice [1-5]: ${RESET}"
 }
@@ -172,6 +208,9 @@ while true; do
             ;;
         3) 
             interact_contract
+            ;;
+        4)
+            check_logs
             ;;
         5)
             echo -e "${RED}👋 Exiting...${RESET}"
