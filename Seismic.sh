@@ -88,7 +88,9 @@ deploy_contract() {
     bash script/deploy.sh
     cd ../../
 
-    echo -e "${GREEN}🎉 Contract deployed successfully
+    echo -e "${GREEN}🎉 Contract deployed successfully!${NC}"
+    read -p "Press Enter to continue..."
+}
 
 # ----------------------------
 # Interact with Contract
@@ -130,13 +132,12 @@ display_ascii() {
     echo -e "    ${MAGENTA}██║  ██║██║  ██║███████║██║  ██║██║ ╚████║${NC}"
     echo -e "    ${CYAN}╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝${NC}"
     echo "================================================================"
-    echo -e "${CYAN}=== Telegram Channel : (CryptoAirdropHindi) (@CryptoAirdropHindi) ===${NC}"  
+    echo -e "${CYAN}=== Telegram Channel: CryptoAirdropHindi @CryptoAirdropHindi ===${NC}"  
     echo -e "${CYAN}=== Follow us on social media for updates and more ===${NC}"
     echo -e "=== 📱 Telegram: https://t.me/CryptoAirdropHindi6 ==="
     echo -e "=== 🎥 YouTube: https://www.youtube.com/@CryptoAirdropHindi6 ==="
     echo -e "=== 💻 GitHub Repo: https://github.com/CryptoAirdropHindi/ ==="
 }
-
 
 # ----------------------------
 # Main Menu
