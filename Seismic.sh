@@ -98,6 +98,20 @@ deploy_contract() {
 interact_contract() {
     echo -e "${YELLOW}🔗 Interacting with contract...${NC}"
 
+    # Check if try-devnet directory exists
+    if [ ! -d "try-devnet" ]; then
+        echo -e "${RED}❌ try-devnet directory not found. Please deploy a contract first (Option 2).${NC}"
+        read -p "Press Enter to continue..."
+        return
+    fi
+
+    # Check if cli directory exists
+    if [ ! -d "try-devnet/packages/cli" ]; then
+        echo -e "${RED}❌ CLI package directory not found. The repository might not have been cloned properly.${NC}"
+        read -p "Press Enter to continue..."
+        return
+    fi
+
     # Update and install zip (if not installed)
     echo -e "${CYAN}🔄 Updating packages and installing zip...${NC}"
     sudo apt update
@@ -115,15 +129,32 @@ interact_contract() {
     # 2. Install dependencies
     echo -e "${CYAN}📦 Installing Node dependencies...${NC}"
     cd try-devnet/packages/cli/
+    
+    if [ ! -f "package.json" ]; then
+        echo -e "${RED}❌ package.json not found in CLI directory.${NC}"
+        cd ../../../
+        read -p "Press Enter to continue..."
+        return
+    fi
+    
     bun install
 
     # 3. Send transactions
     echo -e "${YELLOW}💸 Sending test transactions...${NC}"
+    if [ ! -f "script/transact.sh" ]; then
+        echo -e "${RED}❌ transact.sh script not found.${NC}"
+        cd ../../../
+        read -p "Press Enter to continue..."
+        return
+    fi
+    
     bash script/transact.sh
 
+    cd ../../../
     echo -e "${GREEN}🎉 Transactions executed successfully!${NC}"
     read -p "Press Enter to continue..."
 }
+
 
 # ----------------------------
 # Check Logs
